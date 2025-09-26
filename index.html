@@ -1,151 +1,134 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Pookie Photo Booth</title>
-  <script defer src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
-  <style>
-    body {
-      margin: 0;
-      font-family: "Comic Sans MS", cursive;
-      background: #ffe6f2;
-      text-align: center;
-      overflow-x: hidden;
-    }
-    h1 { color:#ff69b4; margin:20px; font-size:28px; }
-    .page { display:none; }
-    .active { display:block; }
-
-    /* Intro */
-    #introCat {
-      font-size:80px;
-      animation: bounce 1.5s infinite;
-    }
-    @keyframes bounce {
-      0%,100% { transform: translateY(0); }
-      50% { transform: translateY(-15px); }
-    }
-    .btn {
-      background:#ff69b4; color:white; border:none;
-      padding:12px 20px; border-radius:25px; font-size:18px;
-      cursor:pointer; margin-top:20px;
-    }
-
-    /* Camera */
-    #cameraContainer {
-      margin:20px auto; width:300px; height:300px;
-      border-radius:50%; overflow:hidden;
-      border:6px solid #ffb6c1; position:relative;
-    }
-    video { width:100%; height:100%; object-fit:cover; }
-
-    /* Output */
-    canvas {
-      max-width:90%; border:5px solid #ffb6c1; border-radius:20px;
-      margin-top:20px;
-    }
-
-    /* Floating hearts & kittens */
-    .float {
-      position: fixed; bottom:-40px; font-size:28px;
-      animation: floatUp 6s linear infinite;
-      pointer-events:none;
-    }
-    @keyframes floatUp {
-      0% { transform: translateY(0); opacity:1; }
-      100% { transform: translateY(-100vh); opacity:0; }
-    }
-    #bunnyCat { display:none; margin:15px; font-size:20px; color:#ff69b4; }
-  </style>
+<meta charset="UTF-8">
+<title>Pookie Photo Booth</title>
+<script defer src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
+<style>
+body {margin:0;font-family:"Comic Sans MS",cursive;background:#ffe6f2;text-align:center;overflow-x:hidden;}
+h1 {color:#ff69b4;margin:20px;font-size:28px;}
+.page {display:none;}
+.active {display:block;}
+#introCat{font-size:80px;animation:bounce 1.5s infinite;}
+@keyframes bounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-15px);}}
+.btn{background:#ff69b4;color:white;border:none;padding:12px 20px;border-radius:25px;font-size:18px;cursor:pointer;margin-top:20px;}
+#cameraContainer{margin:20px auto;width:300px;height:300px;border-radius:50%;overflow:hidden;border:6px solid #ffb6c1;position:relative;animation:glow 2s infinite alternate;}
+@keyframes glow{0%{box-shadow:0 0 5px #ffb6c1;}100%{box-shadow:0 0 25px #ff69b4;}}
+video{width:100%;height:100%;object-fit:cover;}
+canvas{max-width:90%;border:5px solid #ffb6c1;border-radius:20px;margin-top:20px;}
+.float{position:fixed;bottom:-40px;font-size:28px;animation:floatUp 6s linear infinite;pointer-events:none;}
+@keyframes floatUp{0%{transform:translateY(0);opacity:1;}100%{transform:translateY(-100vh);opacity:0;}}
+#bunnyCat{display:none;margin:15px;font-size:20px;color:#ff69b4;}
+#gallery img{max-width:150px;margin:5px;border:3px solid #ffb6c1;border-radius:15px;}
+</style>
 </head>
 <body>
-  <!-- Page 1: Intro -->
-  <div id="page1" class="page active">
-    <div id="introCat">🐱</div>
-    <h1>Hello cutie, can I take your photo? 💖</h1>
-    <button class="btn" onclick="gotoPage(2)">Yes!</button>
-  </div>
+<!-- Page 1: Intro -->
+<div id="page1" class="page active">
+<div id="introCat">🐱</div>
+<h1>Hello cutie, can I take your photo? 💖</h1>
+<button class="btn" onclick="gotoPage(2)">Yes!</button>
+</div>
 
-  <!-- Page 2: Camera -->
-  <div id="page2" class="page">
-    <h1>📸 Pose for the photo!</h1>
-    <div id="cameraContainer"><video id="video" autoplay playsinline></video></div>
-    <button class="btn" id="captureBtn">Take Photo</button>
-  </div>
+<!-- Page 2: Camera -->
+<div id="page2" class="page">
+<h1>📸 Pose for the photo!</h1>
+<div id="cameraContainer"><video id="video" autoplay playsinline></video></div>
+<button class="btn" id="captureBtn">Take Photo</button>
+</div>
 
-  <!-- Page 3: Result -->
-  <div id="page3" class="page">
-    <h1>Your cute edited photo 💕</h1>
-    <canvas id="canvas"></canvas>
-    <div id="bunnyCat">🐰🐱 “Here is your photo!”</div><br>
-    <button class="btn" id="downloadBtn">⬇️ Download</button>
-  </div>
+<!-- Page 3: Result -->
+<div id="page3" class="page">
+<h1>Your cute edited photo 💕</h1>
+<canvas id="canvas"></canvas>
+<div id="bunnyCat">🐰🐱 “Here is your photo!”</div><br>
+<button class="btn" id="downloadBtn">⬇️ Download</button>
+<button class="btn" onclick="gotoPage(4)">View Gallery</button>
+</div>
+
+<!-- Page 4: Admin gallery -->
+<div id="page4" class="page">
+<h1>📷 Pookie Gallery</h1>
+<div id="gallery"></div>
+<button class="btn" onclick="gotoPage(2)">Take More Photos</button>
+</div>
 
 <script>
-  // Page switching
-  function gotoPage(n){
-    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-    document.getElementById('page'+n).classList.add('active');
+let photos=[];
+function gotoPage(n){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page'+n).classList.add('active');
+}
+
+// Start camera
+const video=document.getElementById('video');
+navigator.mediaDevices.getUserMedia({video:true}).then(s=>video.srcObject=s);
+
+// Load face-api models
+Promise.all([
+  faceapi.nets.tinyFaceDetector.loadFromUri('https://cdn.jsdelivr.net/npm/face-api.js/weights'),
+  faceapi.nets.faceLandmark68Net.loadFromUri('https://cdn.jsdelivr.net/npm/face-api.js/weights')
+]).then(()=>console.log("Models loaded"));
+
+// Capture photo
+const canvas=document.getElementById('canvas');
+const ctx=canvas.getContext('2d');
+const bunnyCat=document.getElementById('bunnyCat');
+
+document.getElementById('captureBtn').onclick=async ()=>{
+  canvas.width=video.videoWidth; canvas.height=video.videoHeight;
+  ctx.drawImage(video,0,0,canvas.width,canvas.height);
+
+  const detection=await faceapi.detectSingleFace(video,new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks();
+  if(detection){
+    const lm=detection.landmarks;
+
+    // Ribbon 🎀 above forehead (left side)
+    const forehead=lm.getLeftEyeBrow()[0];
+    ctx.font="60px serif"; ctx.fillText("🎀",forehead.x-30,forehead.y-40);
+
+    // Blush on cheeks
+    const leftCheek=lm.getLeftCheek()[0];
+    const rightCheek=lm.getRightCheek()[0];
+    ctx.fillStyle="rgba(255,105,180,0.5)";
+    ctx.beginPath(); ctx.ellipse(leftCheek.x,leftCheek.y,25,10,0,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(rightCheek.x,rightCheek.y,25,10,0,0,Math.PI*2); ctx.fill();
   }
 
-  // Start camera
-  const video=document.getElementById('video');
-  navigator.mediaDevices.getUserMedia({video:true}).then(s=>video.srcObject=s);
+  bunnyCat.style.display="block";
+  photos.push(canvas.toDataURL()); // save to session gallery
+  gotoPage(3);
+};
 
-  const canvas=document.getElementById('canvas');
-  const ctx=canvas.getContext('2d');
+// Download
+document.getElementById('downloadBtn').onclick=()=>{
+  const link=document.createElement('a');
+  link.download='pookie-photo.png';
+  link.href=canvas.toDataURL();
+  link.click();
+};
 
-  // Load face-api models
-  Promise.all([
-    faceapi.nets.tinyFaceDetector.loadFromUri('https://cdn.jsdelivr.net/npm/face-api.js/weights'),
-    faceapi.nets.faceLandmark68Net.loadFromUri('https://cdn.jsdelivr.net/npm/face-api.js/weights')
-  ]).then(()=>console.log("Models loaded"));
+// Floating hearts & kittens
+function createFloat(){
+  const el=document.createElement("div");
+  el.classList.add("float");
+  el.innerHTML=Math.random()>0.5?"💖":"🐱";
+  el.style.left=Math.random()*window.innerWidth+"px";
+  el.style.animationDuration=(4+Math.random()*3)+"s";
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),6000);
+}
+setInterval(createFloat,900);
 
-  document.getElementById('captureBtn').onclick=async ()=>{
-    canvas.width=video.videoWidth;
-    canvas.height=video.videoHeight;
-    ctx.drawImage(video,0,0,canvas.width,canvas.height);
-
-    // Detect face
-    const detections=await faceapi.detectSingleFace(video,new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks();
-    if(detections){
-      const lm=detections.landmarks;
-
-      // 🎀 ribbon near left eyebrow
-      const forehead=lm.getLeftEyeBrow()[0];
-      ctx.font="60px serif";
-      ctx.fillText("🎀",forehead.x-30,forehead.y-40);
-
-      // Blush: two pink ovals on cheeks
-      const leftCheek=lm.getLeftCheek()[0];
-      const rightCheek=lm.getRightCheek()[0];
-      ctx.fillStyle="rgba(255,105,180,0.5)";
-      ctx.beginPath(); ctx.ellipse(leftCheek.x,leftCheek.y,25,10,0,0,Math.PI*2); ctx.fill();
-      ctx.beginPath(); ctx.ellipse(rightCheek.x,rightCheek.y,25,10,0,0,Math.PI*2); ctx.fill();
-    }
-
-    document.getElementById('bunnyCat').style.display="block";
-    gotoPage(3);
-  };
-
-  document.getElementById('downloadBtn').onclick=()=>{
-    const link=document.createElement('a');
-    link.download='pookie-photo.png';
-    link.href=canvas.toDataURL();
-    link.click();
-  };
-
-  // Floating hearts & kittens
-  function createFloat(){
-    const el=document.createElement("div");
-    el.classList.add("float");
-    el.innerHTML=Math.random()>0.5?"💖":"🐱";
-    el.style.left=Math.random()*window.innerWidth+"px";
-    el.style.animationDuration=(4+Math.random()*3)+"s";
-    document.body.appendChild(el);
-    setTimeout(()=>el.remove(),6000);
-  }
-  setInterval(createFloat,900);
+// Gallery
+function updateGallery(){
+  const g=document.getElementById('gallery'); g.innerHTML="";
+  photos.forEach(p=>{
+    const img=document.createElement('img'); img.src=p;
+    g.appendChild(img);
+  });
+}
+document.querySelector('[onclick="gotoPage(4)"]').addEventListener('click',updateGallery);
 </script>
 </body>
 </html>
