@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Pookie Photo Booth</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: "Comic Sans MS", cursive;
+      background: #ffe6f2;
+      text-align: center;
+      overflow: hidden;
+    }
+    h1 {
+      color: #ff69b4;
+      margin-top: 20px;
+      font-size: 28px;
+    }
+    #cameraContainer {
+      margin: 20px auto;
+      width: 300px;
+      height: 300px;
+      border-radius: 50%;
+      overflow: hidden;
+      position: relative;
+      border: 6px solid #ffb6c1;
+    }
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    #captureBtn {
+      background: #ff69b4;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 25px;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 15px;
+    }
+    #output {
+      margin-top: 20px;
+      position: relative;
+    }
+    canvas {
+      max-width: 90%;
+      border: 5px solid #ffb6c1;
+      border-radius: 20px;
+    }
+    #downloadBtn {
+      display: none;
+      margin-top: 15px;
+      background: #ff69b4;
+      color: white;
+      padding: 10px 18px;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+    }
+    /* Floating hearts & kittens */
+    .float {
+      position: fixed;
+      bottom: -40px;
+      font-size: 28px;
+      animation: floatUp 6s linear infinite;
+    }
+    @keyframes floatUp {
+      0% { transform: translateY(0); opacity: 1; }
+      100% { transform: translateY(-100vh); opacity: 0; }
+    }
+    /* Bunny-cat */
+    #bunnyCat {
+      display: none;
+      margin-top: 15px;
+      font-size: 20px;
+      color: #ff69b4;
+    }
+  </style>
+</head>
+<body>
+  <h1>💖 Hello cutie, ready for a photo session? 💖</h1>
+
+  <div id="cameraContainer">
+    <video id="video" autoplay playsinline></video>
+  </div>
+
+  <button id="captureBtn">📸 Take Photo</button>
+
+  <div id="output">
+    <canvas id="canvas"></canvas>
+    <div id="bunnyCat">🐰🐱 “Hello, this is your photo!”</div>
+  </div>
+
+  <button id="downloadBtn">⬇️ Download Photo</button>
+
+  <script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const captureBtn = document.getElementById('captureBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const bunnyCat = document.getElementById('bunnyCat');
+
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => { video.srcObject = stream; });
+
+    captureBtn.onclick = () => {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      // Ribbon overlay
+      ctx.fillStyle = "#ff69b4";
+      ctx.beginPath();
+      ctx.arc(80, 80, 40, 0, Math.PI * 2);
+      ctx.arc(140, 80, 40, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#ff3385";
+      ctx.beginPath();
+      ctx.arc(110, 80, 25, 0, Math.PI * 2);
+      ctx.fill();
+
+      bunnyCat.style.display = "block";
+      downloadBtn.style.display = "inline-block";
+    };
+
+    downloadBtn.onclick = () => {
+      const link = document.createElement('a');
+      link.download = 'pookie-photo.png';
+      link.href = canvas.toDataURL();
+      link.click();
+    };
+
+    // Floating hearts & kittens generator
+    function createFloat() {
+      const el = document.createElement("div");
+      el.classList.add("float");
+      el.innerHTML = Math.random() > 0.5 ? "💖" : "🐱";
+      el.style.left = Math.random() * window.innerWidth + "px";
+      el.style.animationDuration = (4 + Math.random() * 3) + "s";
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 6000);
+    }
+    setInterval(createFloat, 900);
+  </script>
+</body>
+</html>
