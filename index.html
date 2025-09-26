@@ -3,147 +3,149 @@
 <head>
   <meta charset="UTF-8">
   <title>Pookie Photo Booth</title>
+  <script defer src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
   <style>
     body {
       margin: 0;
       font-family: "Comic Sans MS", cursive;
       background: #ffe6f2;
       text-align: center;
-      overflow: hidden;
+      overflow-x: hidden;
     }
-    h1 {
-      color: #ff69b4;
-      margin-top: 20px;
-      font-size: 28px;
+    h1 { color:#ff69b4; margin:20px; font-size:28px; }
+    .page { display:none; }
+    .active { display:block; }
+
+    /* Intro */
+    #introCat {
+      font-size:80px;
+      animation: bounce 1.5s infinite;
     }
+    @keyframes bounce {
+      0%,100% { transform: translateY(0); }
+      50% { transform: translateY(-15px); }
+    }
+    .btn {
+      background:#ff69b4; color:white; border:none;
+      padding:12px 20px; border-radius:25px; font-size:18px;
+      cursor:pointer; margin-top:20px;
+    }
+
+    /* Camera */
     #cameraContainer {
-      margin: 20px auto;
-      width: 300px;
-      height: 300px;
-      border-radius: 50%;
-      overflow: hidden;
-      position: relative;
-      border: 6px solid #ffb6c1;
+      margin:20px auto; width:300px; height:300px;
+      border-radius:50%; overflow:hidden;
+      border:6px solid #ffb6c1; position:relative;
     }
-    video {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    #captureBtn {
-      background: #ff69b4;
-      border: none;
-      padding: 12px 20px;
-      border-radius: 25px;
-      color: white;
-      font-size: 16px;
-      cursor: pointer;
-      margin-top: 15px;
-    }
-    #output {
-      margin-top: 20px;
-      position: relative;
-    }
+    video { width:100%; height:100%; object-fit:cover; }
+
+    /* Output */
     canvas {
-      max-width: 90%;
-      border: 5px solid #ffb6c1;
-      border-radius: 20px;
+      max-width:90%; border:5px solid #ffb6c1; border-radius:20px;
+      margin-top:20px;
     }
-    #downloadBtn {
-      display: none;
-      margin-top: 15px;
-      background: #ff69b4;
-      color: white;
-      padding: 10px 18px;
-      border: none;
-      border-radius: 20px;
-      cursor: pointer;
-    }
+
     /* Floating hearts & kittens */
     .float {
-      position: fixed;
-      bottom: -40px;
-      font-size: 28px;
+      position: fixed; bottom:-40px; font-size:28px;
       animation: floatUp 6s linear infinite;
+      pointer-events:none;
     }
     @keyframes floatUp {
-      0% { transform: translateY(0); opacity: 1; }
-      100% { transform: translateY(-100vh); opacity: 0; }
+      0% { transform: translateY(0); opacity:1; }
+      100% { transform: translateY(-100vh); opacity:0; }
     }
-    /* Bunny-cat */
-    #bunnyCat {
-      display: none;
-      margin-top: 15px;
-      font-size: 20px;
-      color: #ff69b4;
-    }
+    #bunnyCat { display:none; margin:15px; font-size:20px; color:#ff69b4; }
   </style>
 </head>
 <body>
-  <h1>💖 Hello cutie, ready for a photo session? 💖</h1>
-
-  <div id="cameraContainer">
-    <video id="video" autoplay playsinline></video>
+  <!-- Page 1: Intro -->
+  <div id="page1" class="page active">
+    <div id="introCat">🐱</div>
+    <h1>Hello cutie, can I take your photo? 💖</h1>
+    <button class="btn" onclick="gotoPage(2)">Yes!</button>
   </div>
 
-  <button id="captureBtn">📸 Take Photo</button>
+  <!-- Page 2: Camera -->
+  <div id="page2" class="page">
+    <h1>📸 Pose for the photo!</h1>
+    <div id="cameraContainer"><video id="video" autoplay playsinline></video></div>
+    <button class="btn" id="captureBtn">Take Photo</button>
+  </div>
 
-  <div id="output">
+  <!-- Page 3: Result -->
+  <div id="page3" class="page">
+    <h1>Your cute edited photo 💕</h1>
     <canvas id="canvas"></canvas>
-    <div id="bunnyCat">🐰🐱 “Hello, this is your photo!”</div>
+    <div id="bunnyCat">🐰🐱 “Here is your photo!”</div><br>
+    <button class="btn" id="downloadBtn">⬇️ Download</button>
   </div>
 
-  <button id="downloadBtn">⬇️ Download Photo</button>
+<script>
+  // Page switching
+  function gotoPage(n){
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.getElementById('page'+n).classList.add('active');
+  }
 
-  <script>
-    const video = document.getElementById('video');
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
-    const captureBtn = document.getElementById('captureBtn');
-    const downloadBtn = document.getElementById('downloadBtn');
-    const bunnyCat = document.getElementById('bunnyCat');
+  // Start camera
+  const video=document.getElementById('video');
+  navigator.mediaDevices.getUserMedia({video:true}).then(s=>video.srcObject=s);
 
-    navigator.mediaDevices.getUserMedia({ video: true })
-      .then(stream => { video.srcObject = stream; });
+  const canvas=document.getElementById('canvas');
+  const ctx=canvas.getContext('2d');
 
-    captureBtn.onclick = () => {
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  // Load face-api models
+  Promise.all([
+    faceapi.nets.tinyFaceDetector.loadFromUri('https://cdn.jsdelivr.net/npm/face-api.js/weights'),
+    faceapi.nets.faceLandmark68Net.loadFromUri('https://cdn.jsdelivr.net/npm/face-api.js/weights')
+  ]).then(()=>console.log("Models loaded"));
 
-      // Ribbon overlay
-      ctx.fillStyle = "#ff69b4";
-      ctx.beginPath();
-      ctx.arc(80, 80, 40, 0, Math.PI * 2);
-      ctx.arc(140, 80, 40, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = "#ff3385";
-      ctx.beginPath();
-      ctx.arc(110, 80, 25, 0, Math.PI * 2);
-      ctx.fill();
+  document.getElementById('captureBtn').onclick=async ()=>{
+    canvas.width=video.videoWidth;
+    canvas.height=video.videoHeight;
+    ctx.drawImage(video,0,0,canvas.width,canvas.height);
 
-      bunnyCat.style.display = "block";
-      downloadBtn.style.display = "inline-block";
-    };
+    // Detect face
+    const detections=await faceapi.detectSingleFace(video,new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks();
+    if(detections){
+      const lm=detections.landmarks;
 
-    downloadBtn.onclick = () => {
-      const link = document.createElement('a');
-      link.download = 'pookie-photo.png';
-      link.href = canvas.toDataURL();
-      link.click();
-    };
+      // 🎀 ribbon near left eyebrow
+      const forehead=lm.getLeftEyeBrow()[0];
+      ctx.font="60px serif";
+      ctx.fillText("🎀",forehead.x-30,forehead.y-40);
 
-    // Floating hearts & kittens generator
-    function createFloat() {
-      const el = document.createElement("div");
-      el.classList.add("float");
-      el.innerHTML = Math.random() > 0.5 ? "💖" : "🐱";
-      el.style.left = Math.random() * window.innerWidth + "px";
-      el.style.animationDuration = (4 + Math.random() * 3) + "s";
-      document.body.appendChild(el);
-      setTimeout(() => el.remove(), 6000);
+      // Blush: two pink ovals on cheeks
+      const leftCheek=lm.getLeftCheek()[0];
+      const rightCheek=lm.getRightCheek()[0];
+      ctx.fillStyle="rgba(255,105,180,0.5)";
+      ctx.beginPath(); ctx.ellipse(leftCheek.x,leftCheek.y,25,10,0,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(rightCheek.x,rightCheek.y,25,10,0,0,Math.PI*2); ctx.fill();
     }
-    setInterval(createFloat, 900);
-  </script>
+
+    document.getElementById('bunnyCat').style.display="block";
+    gotoPage(3);
+  };
+
+  document.getElementById('downloadBtn').onclick=()=>{
+    const link=document.createElement('a');
+    link.download='pookie-photo.png';
+    link.href=canvas.toDataURL();
+    link.click();
+  };
+
+  // Floating hearts & kittens
+  function createFloat(){
+    const el=document.createElement("div");
+    el.classList.add("float");
+    el.innerHTML=Math.random()>0.5?"💖":"🐱";
+    el.style.left=Math.random()*window.innerWidth+"px";
+    el.style.animationDuration=(4+Math.random()*3)+"s";
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(),6000);
+  }
+  setInterval(createFloat,900);
+</script>
 </body>
 </html>
